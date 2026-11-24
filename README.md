@@ -6,6 +6,8 @@ indexes evidence at chunk level, and returns the most useful evidence for a
 query. Answers are produced by the evaluation platform; this service only
 performs Add and Search. Current release: `0.2`.
 
+中文知识入口：[Agent Memory Wiki](index.md)（机制审计、框架对比与学习路线）。
+
 ## What it does
 
 - `POST /add` persists a request atomically: messages, chunks, index views and
