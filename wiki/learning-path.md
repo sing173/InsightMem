@@ -1,17 +1,24 @@
 ---
 title: 用 InsightMem 学习 Agent Memory
-summary: 把 InsightMem 当作外部情景记忆与混合检索的可运行参考，再补齐抽取、更新和遗忘。
+summary: 用 Hello Agents 第 8、9 章重写记忆检索与上下文工程实战教程，并以 InsightMem 和 email-agent Notebook 运行阶段一实验。
 status: maintained
 section: 学习
 order: 60
-updated: 2026-11-24
-tags: [learning, insightmem, labs, study-plan]
+updated: 2026-11-25
+tags: [learning, insightmem, labs, study-plan, hello-agents]
 sources:
-  - learning/agent-memory-tutorial/README.md
-  - learning/agent-memory-tutorial/02-writing.md
-  - learning/agent-memory-tutorial/04-retrieval.md
-  - learning/agent-memory-tutorial/05-fusion.md
-  - learning/agent-memory-tutorial/06-governance.md
+  - learning/agent-memory-course/README.md
+  - learning/agent-memory-course/stage1-memory-and-retrieval/00-quick-start.md
+  - learning/agent-memory-course/stage1-memory-and-retrieval/01-memory-workflow.md
+  - learning/agent-memory-course/stage1-memory-and-retrieval/04-rag-system.md
+  - learning/agent-memory-course/stage1-memory-and-retrieval/05-advanced-retrieval.md
+  - learning/agent-memory-course/stage2-context-engineering/00-context-engineering.md
+  - learning/agent-memory-course/stage2-context-engineering/01-context-builder.md
+  - learning/agent-memory-course/stage2-context-engineering/02-gssc-pipeline.md
+  - learning/agent-memory-course/stage2-context-engineering/03-note-tool.md
+  - learning/agent-memory-course/stage2-context-engineering/04-terminal-tool.md
+  - learning/agent-memory-course/stage2-context-engineering/05-codebase-maintainer.md
+  - learning/agent-memory-course/stage2-context-engineering/06-review.md
   - learning/agent-memory-tutorial/labs.md
   - learning/agent-memory-tutorial/08-capstone.md
 ---
@@ -20,7 +27,7 @@ sources:
 
 ## 它适合教什么
 
-InsightMem 能把 Agent Memory 的**存储与检索工程**完整跑通：
+新教程 [Agent Memory 实战教程](../learning/agent-memory-course/README.md) 按 Hello Agents 第 8 章重写“记忆与检索”，并用本仓库 Notebook 运行实验。InsightMem 提供 RAG 式证据层，email-agent 提供三类记忆的离线对照；两者都不是完整 MemoryManager 或上下文工程实现。
 
 - 全量原文与提炼记忆的取舍；
 - 原始消息、chunk、view、embedding 的关系；
@@ -32,16 +39,19 @@ InsightMem 能把 Agent Memory 的**存储与检索工程**完整跑通：
 
 ## 推荐学习顺序
 
-1. **建立概念地图**：阅读 [[agent-memory]] 和 [00-orientation.md](../learning/agent-memory-tutorial/00-orientation.md)。
+1. **建立概念地图**：阅读 [[agent-memory]] 和 [00 快速开始](../learning/agent-memory-course/stage1-memory-and-retrieval/00-quick-start.md)。
 2. **审计现有实现**：阅读 [[insightmem]]，明确哪些能力存在、哪些不存在。
-3. **理解写入**：运行 L1，比较全量原文、LLM 笔记和抽取事实。
-4. **理解检索**：运行 L3，关闭三路召回并比较 Recall@5、MRR。
-5. **理解证据选择**：运行 L4/L5，观察噪声、重复霸榜和 bundle 去重。
-6. **理解治理**：构造旧事实与新事实序列，对比追加、覆盖和失效。
+3. **理解记忆流程**：运行 email-agent 的 baseline 与 semantic Notebook。
+4. **理解 RAG 流程**：运行 InsightMem Quickstart，观察 Add/Search、幂等和隔离。
+5. **理解检索与选择**：阅读 [04 RAG 系统](../learning/agent-memory-course/stage1-memory-and-retrieval/04-rag-system.md) 与 [05 高级检索](../learning/agent-memory-course/stage1-memory-and-retrieval/05-advanced-retrieval.md)。
+6. **理解治理缺口**：构造旧事实与新事实序列，对比追加、覆盖和失效。
 7. **理解上下文管理**：阅读 [[memgpt-letta]]，对比 InsightMem 缺少的部分。
 8. **做架构综合**：用 [[memory-frameworks]] 完成 Capstone 对比。
+9. **理解上下文工程**：阅读 [阶段二入口](../learning/agent-memory-course/stage2-context-engineering/00-context-engineering.md)。
+10. **拆解 GSSC**：理解候选收集、选择、结构化和压缩。
+11. **设计长程状态**：阅读 NoteTool、TerminalTool 与代码库维护助手，明确安全与恢复边界。
 
-实验手册见 [labs.md](../learning/agent-memory-tutorial/labs.md)。
+旧版 [L0–L8 实验手册](../learning/agent-memory-tutorial/labs.md) 保留为备份参考；阶段一以 `experiments/email-agent` 和 `experiments/insightmem` 为准，阶段二当前为教学骨架。
 
 ## 三个关键问题
 

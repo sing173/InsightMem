@@ -12,3 +12,15 @@ does not imply permission from the upstream authors. Reused work and
 modifications are disclosed here for evaluation and review. Consult the
 upstream authors and applicable terms before redistribution or use requiring a
 license.
+
+## Hello Agents V0.2.8
+
+The source snapshot in `experiments/hello-agents-v0.2.8` comes from
+`jjyaoao/HelloAgents`, tag `V0.2.8`, commit
+`707949e4f76927146acf142db607cbf6d22bce5f`.
+
+That upstream is licensed under `CC-BY-NC-SA-4.0`; its `LICENSE` is preserved in
+the snapshot. The MIT license in this repository does not relicense the
+vendored snapshot. Local additions are limited to `EXPERIMENT.md` and ignore
+rules. Non-commercial and share-alike obligations continue to apply to the
+upstream code and adaptations.

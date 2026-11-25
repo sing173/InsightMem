@@ -1,6 +1,7 @@
-# 实验手册（L0–L7）
+# 实验手册（L0–L8）
 
 > 配套：[八周路线](README.md) · [评测手册](evaluation.md)
+> 可运行入口：阶段一使用 `experiments/email-agent/notebooks/`，确定性证据实验使用 `experiments/insightmem/notebooks/`；完整覆盖关系见 [教程与 Notebook 对照](README.md#notebook-map)。
 > 每个实验都要求：一个 baseline、一个固定变量、一个失败案例、一个成本数字。
 > 所有结果必须能追溯到原始数据、配置和命令；只记“感觉更好”不算完成。
 
@@ -18,6 +19,7 @@
 | L5 | 去重与合并 | 4h | InsightMem + 实验分支 | 冗余占位与 span 校验 |
 | L6 | 矛盾序列 | 6h | 自建小型存储 | 双时间、并发、删除验证 |
 | L7 | 评测 harness | 8h | 任意 | manifest、CI、成本、复现报告 |
+| L8 | memory OS mini | 8h | Store/文件后端 + 固定 reader | paging、自编辑、dreaming、共享隔离 |
 
 ### 每个实验先冻结
 
@@ -368,6 +370,37 @@ runs/<run_id>/
 - oracle 不冒充真实召回成绩；
 - 不只报平均，还报能力切片与失败类型；
 - 结果包含 build/maintenance，而不只是线上 Search 延迟。
+
+---
+
+<a id="l8"></a>
+## L8 memory OS mini（8h）
+
+**目标**：实现一个可观察、可回滚的 memory manager，验证 core / recall / archival、memory pressure、自编辑和共享记忆。
+
+**步骤**
+
+1. 定义 `CoreMemory`、`RecallMemory`、`ArchivalMemory` 三个 Adapter；
+2. 为 core block 实现版本化编辑：`old → new + reason + diff`；
+3. 实现上下文预算与 memory-pressure 阈值；
+4. 至少实现一种策略：摘要低优先级历史、page-out 冷 block、page-in archival item；
+5. 实现后台 consolidation，使用 CAS，不覆盖新人工纠正；
+6. 增加第二个 Agent，共享一个只读 memory block；
+7. 构造 20 组压力场景与 20 组共享/隔离场景；
+8. 对比无 paging、固定 paging、自适应 paging；
+9. 记录 page-in/page-out 准确率、摘要保真、回滚成功率、隔离泄漏、token 与 p95；
+10. 保存 `memory_events.jsonl`、`memory_diff.jsonl` 与评测 manifest。
+
+**产出**：memory OS 设计图、事件日志、消融表与失败案例。
+
+**验收**
+
+- 每次上下文变化都有原因与前后 token 记录；
+- 自编辑可回滚，后台整理不覆盖新版本；
+- 共享 block 的读写权限生效；
+- 跨用户、跨 Agent、跨项目无泄漏；
+- eviction 未被误报为 deletion；
+- 成本包含 consolidation，而不只是 query latency。
 
 ---
 

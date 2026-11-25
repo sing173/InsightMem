@@ -1,6 +1,7 @@
 # 02 写入（第 2 周）
 
 > 上一章：[01 边界与地图](01-boundaries.md) · 下一章：[03 存储与索引](03-storage.md)
+> 阶段：阶段一写语义/情景/程序记忆，阶段二写 Agent 自编辑规则。
 > 预计：6–8 小时
 > 本章目标：能把“值得记”变成可校准规则；能设计带来源、时间和版本的写入协议；能区分幂等、去重与并发控制。
 
@@ -17,6 +18,149 @@
 5. **怎样证明质量**：抽取准不准、约束丢没丢、成本是多少？
 
 本章用一条写入流水线串联这些问题。
+
+### 三类记忆与写入时机
+
+[Long-Term Agentic Memory With LangGraph](https://www.deeplearning.ai/short-courses/long-term-agentic-memory-with-langgraph/) 的三类记忆对应不同写入契约：
+
+| 类型 | 写什么 | 典型形态 | 写入时机 | 主要风险 |
+|---|---|---|---|---|
+| Semantic memory | 用户事实、偏好、实体关系 | fact、profile、document collection | hot path 立即保存，或 background 整理 | 抽取错误、旧值未失效 |
+| Episodic memory | 过去发生过的交互与动作 | 邮件处理示例、trajectory、few-shot pair | 通常在任务完成后筛选 | 示例偏差、重复、泄漏敏感信息 |
+| Procedural memory | 如何做事的规则与指令 | system prompt、rule、skill、playbook | 反馈后更新，常走 background | 错误经验固化成长期指令 |
+
+阶段一的邮件 Agent 可以分别维护：用户偏好集合、历史邮件 few-shot 示例、写作与路由指令。阶段二则进一步允许 Agent 自己编辑 core memory，但必须保留版本、来源与回滚能力。
+
+---
+
+## 本章实战：给邮件 Agent 加三种记忆
+
+> 可运行实验：[02-semantic-memory.ipynb](../../experiments/email-agent/notebooks/02-semantic-memory.ipynb) 与 [03-episodic-and-procedural.ipynb](../../experiments/email-agent/notebooks/03-episodic-and-procedural.ipynb)；稳定实现：[memory.py](../../experiments/email-agent/src/email_memory_lab/memory.py)。
+> 下方 Store 与 LangMem 代码用于理解课程 API；Notebook 通过兼容 `put/get/search` 的 `LocalStore` 验证三类记忆的离线行为，不包含真实 LLM 抽取或 prompt optimizer。
+
+### 第一步：semantic memory——先存一条用户事实
+
+可运行的最小 Store 片段：
+
+```python
+from langgraph.store.memory import InMemoryStore
+
+
+def embed(texts: list[str]) -> list[list[float]]:
+    return embedding_model.embed_documents(texts)
+
+
+store = InMemoryStore(index={"embed": embed, "dims": embedding_dimensions})
+namespace = ("memories", user_id)
+
+store.put(
+    namespace,
+    key="pref-writing-style",
+    value={
+        "content": "User prefers concise, direct email replies.",
+        "context": "Applies to work emails unless the user asks for a formal tone.",
+    },
+)
+
+items = store.search(namespace, query="How should I write this email?", limit=3)
+```
+
+关键不是“把文本塞进 Store”，而是同时保存 **content 与 context**。没有 context，一条偏好被错误套用到所有场景。
+
+课程中的语义记忆还通过两个工具暴露给 Agent：
+
+```python
+from langmem import create_manage_memory_tool, create_search_memory_tool
+
+manage_memory = create_manage_memory_tool(namespace=("memories", "{user_id}", "collection"))
+search_memory = create_search_memory_tool(namespace=("memories", "{user_id}", "collection"))
+```
+
+Agent 决定何时创建、更新、删除或搜索记忆。运行后检查消息轨迹：
+
+```text
+human: Jim is my friend.
+ai.tool_call: manage_memory(content="Jim is ...", action="create")
+tool: Stored memory ...
+ai: Recorded ...
+```
+
+如果工具没有调用，先检查工具描述、schema 和 prompt，不要立刻换 embedding。
+
+### 第二步：episodic memory——把过去的一次处理变成 few-shot
+
+```python
+example = {
+    "email": {
+        "from": "tom@example.com",
+        "subject": "Documentation pricing",
+        "body": "Hi John, how much does the documentation cost?",
+    },
+    "label": "ignore",
+}
+
+store.put(
+    ("examples", user_id),
+    key="email-example-001",
+    value=example,
+)
+
+examples = store.search(
+    ("examples", user_id),
+    query=format_email(current_email),
+    limit=1,
+)
+prompt = TRIAGE_PROMPT.format(examples=format_examples(examples))
+```
+
+此时改变的不是事实库，而是**模型看到的示例**。检查点：
+
+- 新示例是否只影响当前 user？
+- 相似但不完全相同的邮件是否仍被正确分类？
+- 错误示例会不会被反复检索？
+
+### 第三步：procedural memory——把反馈变成可更新指令
+
+```python
+namespace = ("instructions", user_id)
+item = store.get(namespace, key="email-style")
+
+if item is None:
+    store.put(namespace, key="email-style", value={"prompt": DEFAULT_EMAIL_STYLE})
+else:
+    current_prompt = item.value["prompt"]
+
+# 输入：完整处理轨迹 + 用户反馈
+# 输出：需要更新的 prompt，以及更新理由
+updated = optimize_prompt(
+    current_prompt=current_prompt,
+    trajectory=messages,
+    feedback="Always sign emails as John Doe.",
+)
+
+if updated.prompt != current_prompt:
+    store.put(namespace, key="email-style", value={"prompt": updated.prompt})
+```
+
+必须区分三种更新：
+
+| 更新 | 是否改变行为 | 风险 |
+|---|---|---|
+| 新增 semantic fact | 可能改变个性化内容 | 事实错误 |
+| 新增 episodic example | 改变 few-shot 行为 | 示例偏差 |
+| 修改 procedural prompt | 改变长期指令 | 错误经验固化 |
+
+### 本章检查点
+
+- 能用一条轨迹证明 Agent 确实调用了 memory tool 吗？
+- 能解释 content 与 context 为什么缺一不可吗？
+- 能区分 fact、example、prompt 三种记忆吗？
+- 如果用户纠正事实，应该 UPDATE 旧记忆还是新建一条？
+- 如果 background 更新失败，主请求是否仍应成功？
+
+### 练习
+
+为同一用户写入一条写作偏好、一条邮件示例和一条签名指令。分别关闭三类记忆，观察三封测试邮件的变化，并记录每类的 token 与延迟。
 
 ---
 
@@ -42,7 +186,7 @@ event
 
 ## 2.1 显著性：未来任务效用，而不是情绪强度
 
-Anthropic 的 memory notes 框架把 salience 作为写入筛选依据。工程上不要把它实现成“语气强就记”，而应估计未来效用。
+[Anthropic 的 memory notes 框架](https://www.anthropic.com/research/components-of-agent-memory)把 salience 作为写入筛选依据。工程上不要把它实现成“语气强就记”，而应估计未来效用。
 
 一个可解释的打分起点：
 
@@ -254,7 +398,7 @@ ingested_at:   2026-11-21
 
 它表示“用户从 10 月 1 日起住在上海，11 月 20 日结束；系统在 11 月 21 日才知道”。
 
-只用 `ingested_at` 会把迟报事实放到错误的历史位置。Zep 的 bi-temporal 设计将 valid time 与 ingest time 分开，使“当时知道什么”和“现在有效什么”都可查询。
+只用 `ingested_at` 会把迟报事实放到错误的历史位置。[Zep 本地精读](../../docs/papers-zh/03-systems.md#zep) 的 bi-temporal 设计将 valid time 与 ingest time 分开，使“当时知道什么”和“现在有效什么”都可查询。
 
 实验：
 

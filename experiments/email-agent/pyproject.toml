@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "email-memory-lab"
+version = "0.1.0"
+description = "Stage-one email agent experiments for semantic, episodic, and procedural memory"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+notebooks = [
+    "ipykernel>=6,<8",
+    "jupyterlab>=4,<5",
+    "nbformat>=5.10,<6",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

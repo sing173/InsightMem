@@ -1,6 +1,7 @@
 # 04 召回（第 4 周）
 
 > 上一章：[03 存储与索引](03-storage.md) · 下一章：[05 融合与选择](05-fusion.md)
+> 阶段：阶段一实现邮件 Agent 的 memory search，阶段二理解 recall/archival 工具。
 > 预计：6–8 小时
 > 本章目标：能解释每条召回腿的假设、盲区和停止条件；能区分检索与重排；能把“没召回、排太后、被截断”分开诊断。
 
@@ -18,6 +19,89 @@
 - 图检索何时停止；
 - 重排为什么不能替代召回；
 - 如何定位失败发生在哪一步。
+
+## 本章实战：让 Agent 自己决定何时检索
+
+> 当前未实现 Agentic RAG Notebook。本节代码是 LangGraph/Letta 工具骨架；现有邮件 Agent 的 `LocalStore` 搜索由应用显式调用，不能替代 Agent 自主决定检索。
+
+阶段一通常由应用显式调用 Store search，把结果交给 Agent；阶段二则把检索暴露为 Agent 可调用工具：
+
+```text
+LangGraph：application → store.search(namespace, query) → context builder → LLM
+MemGPT/Letta：Agent → recall_search / archival_search → memory manager → context
+```
+
+两者都必须固定 scope、候选深度、返回格式与预算。区别不在“有没有向量库”，而在**谁决定何时检索、检索后如何进入上下文**。
+
+教学骨架：
+
+```python
+from typing import Annotated
+from langchain_core.tools import InjectedToolArg
+from langgraph.store.base import BaseStore
+
+
+@tool
+async def search_memory(
+    query: str,
+    limit: int = 5,
+    *,
+    user_id: Annotated[str, InjectedToolArg],
+    store: Annotated[BaseStore, InjectedToolArg],
+) -> str:
+    """Search long-term user facts and preferences."""
+    items = await store.asearch(("memories", user_id, "collection"), query=query, limit=limit)
+    return format_memories(items)
+
+
+@tool
+def search_recall(query: str, limit: int = 5) -> str:
+    """Search earlier messages in the conversation history."""
+    return recall_storage.search(query, limit)
+
+
+@tool
+def search_archival(query: str, limit: int = 5) -> str:
+    """Search external documents and long-term knowledge."""
+    return archival_storage.search(query, limit)
+```
+
+Agent 不只决定“要不要搜索”，还决定搜索词。例如用户问“上次那个 API 问题”，Agent 可能搜索 `API documentation missing endpoints`，而不是把整封邮件原样作为 query。
+
+### 固定管线与 Agentic RAG
+
+| 形态 | 谁决定检索 | 优点 | 风险 |
+|---|---|---|---|
+| 固定 pipeline | 应用代码 | 稳定、可复现 | 查询策略难自适应 |
+| Agentic RAG | Agent | 可多轮改写 query、按需翻页 | 过度检索、延迟与成本不稳定 |
+
+课程中的 Agentic RAG 有两种接法：把文档复制到 Archival Memory，或通过自定义工具查询外部数据库。两种方式都要固定 embedding identity、权限与返回格式。
+
+### 看轨迹，不只看答案
+
+一次成功检索应能回答：
+
+```text
+为什么触发搜索？
+search query 是什么？
+返回了哪些 ID？
+gold evidence 是否在候选内？
+证据是否进入 prompt？
+reader 是否使用了证据？
+```
+
+如果 gold 根本没进候选，问题在召回；如果进了候选但没进 prompt，问题在选择/装配；如果进了 prompt 仍答错，问题在 reader。
+
+### 检查点
+
+- Agentic RAG 与传统 RAG 的区别是什么？
+- 为什么 user_id 应该由运行时注入，而不是让模型填写？
+- Recall 与 Archival 的搜索工具有什么不同？
+- 搜索失败时应该返回空结果、报错，还是允许 Agent 继续？
+
+### 练习
+
+给邮件 Agent 接入 `search_memory` 与 `search_recall`。分别记录“用户偏好查询”和“上次承诺查询”的完整工具轨迹，并标出失败层。
 
 ---
 
@@ -151,7 +235,7 @@ score = cos(q,d)
 
 ### 6.1 ColBERT：token 级 late interaction
 
-ColBERT 为 query 和 document 产生 token embedding，再做 MaxSim：
+[ColBERT](https://arxiv.org/abs/2004.12832) 为 query 和 document 产生 token embedding，再做 MaxSim：
 
 ```text
 Score(q,D) = Σᵢ maxⱼ (qᵢ · dⱼ)
@@ -216,7 +300,7 @@ Selection 决定“最终注入哪些”
 
 ### 7.2 HippoRAG
 
-HippoRAG 用实体图上的个性化 PageRank 从 query entity 传播相关性，目标是一次图传播找到多跳邻居，替代部分迭代检索。
+[HippoRAG 本地精读](../../docs/papers-zh/04-retrieval-eval.md#hipporag) 用实体图上的个性化 PageRank 从 query entity 传播相关性，目标是一次图传播找到多跳邻居，替代部分迭代检索。
 
 适用：显式关系、多跳 bridge、需要路径证据。
 
@@ -224,7 +308,7 @@ HippoRAG 用实体图上的个性化 PageRank 从 query entity 传播相关性�
 
 ### 7.3 GraphRAG
 
-GraphRAG 的全局查询使用社区摘要 map-reduce，更适合“整个语料的主要主题是什么”，不是普通局部事实检索的最佳替代。
+[GraphRAG 本地精读](../../docs/papers-zh/04-retrieval-eval.md#graphrag) 的全局查询使用社区摘要 map-reduce，更适合“整个语料的主要主题是什么”，不是普通局部事实检索的最佳替代。
 
 ### 7.4 时间召回
 
@@ -383,13 +467,12 @@ InsightMem 当前没有查询分类器，三路全开；因此“按查询类型
 
 ### 一手依据
 
-- [BM25 and Beyond](https://doi.org/10.1561/1500000019)：词法检索的参数与模型。
 - [ColBERT](https://arxiv.org/html/2004.12832v2)：late interaction 与 token-level retrieval。
 - [Passage Re-ranking with BERT](https://arxiv.org/abs/1901.04085)：cross-encoder 重排。
 - [Sentence Transformers: Retrieve & Re-Rank](https://sbert.net/examples/sentence_transformer/applications/retrieve_rerank/README.html)：官方实践。
-- [HippoRAG](https://arxiv.org/html/2405.14831v3)：实体图与 PPR。[中文精读](../../docs/papers-zh/04-retrieval-eval.md#hipporag)
+- [HippoRAG 本地精读](../../docs/papers-zh/04-retrieval-eval.md#hipporag) · [原文](https://arxiv.org/html/2405.14831v3)：实体图与 PPR。
 - [HippoRAG 2](https://arxiv.org/html/2502.14802v1)：后续记忆检索框架，注意与第一代区分。
-- [GraphRAG](https://arxiv.org/html/2404.16130v2)：社区摘要与全局查询。[中文精读](../../docs/papers-zh/04-retrieval-eval.md#graphrag)
+- [GraphRAG 本地精读](../../docs/papers-zh/04-retrieval-eval.md#graphrag) · [原文](https://arxiv.org/html/2404.16130v2)：社区摘要与全局查询。
 - [GraphRAG Query Overview](https://microsoft.github.io/graphrag/query/overview/)：官方查询模式。
 - [Qdrant Late Interaction](https://qdrant.tech/documentation/tutorials-search-engineering/using-multivector-representations/)：多向量检索工程说明。
 

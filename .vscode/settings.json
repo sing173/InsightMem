@@ -1,0 +1,13 @@
+{
+  "python.analysis.extraPaths": [
+    "src",
+    "experiments/insightmem/src",
+    "experiments/email-agent/src"
+  ],
+  "jupyter.notebookFileRoot": "${workspaceFolder}",
+  "files.watcherExclude": {
+    "**/runs/**": true,
+    "**/.ipynb_checkpoints/**": true,
+    "**/__pycache__/**": true
+  }
+}

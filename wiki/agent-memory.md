@@ -63,6 +63,6 @@ Agent Memory 是**跨会话保留、之后可以作为上下文重新读取的�
 <!-- generated:backlinks:start -->
 ## 反向链接
 
-- [[learning-path|用 InsightMem 学习 Agent Memory]] — 把 InsightMem 当作外部情景记忆与混合检索的可运行参考，再补齐抽取、更新和遗忘。
+- [[learning-path|用 InsightMem 学习 Agent Memory]] — 用 Hello Agents 第 8、9 章重写记忆检索与上下文工程实战教程，并以 InsightMem 和 email-agent Notebook 运行阶段一实验。
 - [[schema|Wiki 维护约定]] — 说明源文档、Wiki 页面、frontmatter、生成索引与反向链接的维护方式。
 <!-- generated:backlinks:end -->

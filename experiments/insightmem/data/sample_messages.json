@@ -1,0 +1,17 @@
+[
+  {
+    "role": "user",
+    "content": "The parser drops backslashes in Windows paths.",
+    "timestamp": 1763942400000
+  },
+  {
+    "role": "assistant",
+    "content": "I traced the parser failure to parse_path and will preserve the raw separators.",
+    "timestamp": 1763942401000
+  },
+  {
+    "role": "user",
+    "content": "The retry worker loses the request id after a timeout.",
+    "timestamp": 1763942402000
+  }
+]

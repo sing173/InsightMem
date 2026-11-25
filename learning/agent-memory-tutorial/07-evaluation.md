@@ -1,10 +1,100 @@
 # 07 评测（第 7 周）
 
 > 上一章：[06 更新与治理](06-governance.md) · 下一章：[08 架构对比与 Capstone](08-capstone.md)
+> 阶段：阶段一验收 LangGraph 邮件 Agent；阶段二复用同一协议评测 memory OS。
 > 预计：6–8 小时
 > 本章目标：能把“系统更好”拆成可验证假设；能固定 benchmark 合同、做 held-out 与配对统计、校准 judge，并报告完整成本和原始产物。
 
 完整协议见 [评测手册](evaluation.md)，实验步骤见 [L7](labs.md#l7)。
+
+### 两阶段验收指标
+
+| 阶段 | 主项目 | 必测指标 |
+|---|---|---|
+| 阶段一 | LangGraph 邮件 Agent | 路由准确率、写作偏好一致性、few-shot 命中、错误记忆率、read/write token、p95 延迟 |
+| 阶段二 | memory OS mini service | memory-pressure 触发次数、page-in/page-out 准确率、摘要保真、自编辑回滚成功率、共享隔离、完整成本 |
+
+两阶段都使用同一套原则：固定 reader、prompt、数据、预算和 seed；报告分子/分母、失败案例与原始产物。阶段二实验步骤见 [L8](labs.md#l8)。
+
+---
+
+## 本章实战：给邮件 Agent 做一次可信对比
+
+> 可运行实验：[04-evaluation.ipynb](../../experiments/email-agent/notebooks/04-evaluation.ipynb)；稳定实现：[evaluate_config()](../../experiments/email-agent/src/email_memory_lab/evaluation.py#L57)。
+> 当前 Notebook 使用 10 封邮件与确定性策略，只验证离线机制；它不包含真实 LLM 的 token、p95、judge 或 paired bootstrap。
+
+### 第一步：准备一个最小数据集
+
+构造 20 封邮件，覆盖：
+
+- 应忽略的推广邮件；
+- 应通知的紧急事件；
+- 需要回复的业务邮件；
+- 需要历史偏好的写作任务；
+- 需要上次承诺的跟进任务。
+
+每封邮件标注：
+
+```text
+expected_action: ignore / notify / respond
+required_memory: semantic / episodic / procedural / none
+gold_fact_ids: [...]
+gold_example_ids: [...]
+```
+
+### 第二步：固定四组配置
+
+| 配置 | semantic | episodic | procedural |
+|---|---|---|---|
+| baseline | 无 | 无 | 无 |
+| +semantic | 有 | 无 | 无 |
+| +episodic | 有 | 有 | 无 |
+| full memory | 有 | 有 | 有 |
+
+只增加一种机制，保持 reader、prompt 模板、工具与 top_k 不变。
+
+### 第三步：保存逐题轨迹
+
+逐题执行与结果保存已有稳定实现，见 [evaluate_config()](../../experiments/email-agent/src/email_memory_lab/evaluation.py#L57) 和 [04-evaluation.ipynb](../../experiments/email-agent/notebooks/04-evaluation.ipynb)。教程不再重复维护同一份循环，实际项目至少保存：
+
+- `email_id`、`expected_action`、`predicted_action`；
+- 命中的记忆 ID、gold IDs 与是否进入上下文；
+- 最终回复、失败原因与配置；
+- 若使用 LLM，再记录 prompt token、memory tool 调用、p50/p95 延迟和 memory edits。
+
+不要只保存最终回答。没有检索 ID 和 memory edits，就无法区分“没有记忆”“检索错”“选择错”和“reader 错”。
+
+### 第四步：先算检索，再算回答
+
+```text
+memory recall = 命中的 gold memory / 应有的 gold memory
+routing accuracy = 正确分类的邮件 / 全部邮件
+writing compliance = 满足签名/语气约束的回复 / 应回复邮件
+```
+
+如果 memory recall 高但回答差，检查 context builder 与 reader；如果 recall 低，检查写入与检索。
+
+### 第五步：报告成本与失败
+
+至少报告：
+
+- 每封邮件平均 prompt token；
+- memory tool 调用次数；
+- p50 / p95 延迟；
+- 错误记忆条数；
+- 三个失败案例及归因。
+
+### 检查点
+
+- 为什么 baseline 必须使用同一个 reader？
+- 为什么 20 封邮件只能算探索性实验？
+- memory recall 与 routing accuracy 有什么区别？
+- 如果 full memory 更慢但更准，应该如何报告？
+- 如果 procedural memory 让某些邮件从 respond 变成 ignore，这是收益还是污染？
+
+### 练习
+
+运行四组配置，做 paired bootstrap，报告平均 Δ 与 95% CI。再挑一个 full memory 失败案例，分别检查 gold memory 是否写入、是否检索、是否进入 prompt。
 
 ---
 
@@ -32,7 +122,7 @@
 
 ## 2. Benchmark 合同
 
-### 2.1 LongMemEval
+### 2.1 [LongMemEval 本地精读](../../docs/papers-zh/04-retrieval-eval.md#longmemeval)
 
 官方当前提供三个数据文件：
 
@@ -51,7 +141,11 @@
 - 官方输出为 `question_id + hypothesis` 的 JSONL，再用统一 evaluator；
 - 官方仓库已宣布 LongMemEval-V2；引用时必须注明使用的是原版还是 V2。
 
-### 2.2 LoCoMo
+#### LongMemEval-V2：从聊天记忆转向环境经验
+
+[LongMemEval-V2 本地译读](../../docs/papers-zh/05-longmemeval-v2.md) 不是 V1 的简单扩长版：它使用 451 道 Web/ServiceNow 轨迹题，考查静态状态、动态状态、工作流、环境陷阱和前提意识；记忆模块通过 `Insert/Query` 返回多模态证据，再由固定 reader 回答，并同时报告准确率与查询延迟。V1 与 V2 的数据、能力标签和分数不能混用。
+
+### 2.2 [LoCoMo 本地精读](../../docs/papers-zh/04-retrieval-eval.md#locomo)
 
 当前公开仓库发布 `locomo10.json`，包含 10 个长对话；论文早期版本为 50 个 conversations。当前公开版是其子集。
 
@@ -318,6 +412,7 @@ failures.jsonl
 
 - [LongMemEval, arXiv:2410.10813](https://arxiv.org/abs/2410.10813)：500 题与五种能力。[中文精读](../../docs/papers-zh/04-retrieval-eval.md#longmemeval)
 - [LongMemEval 官方仓库](https://github.com/xiaowu0162/LongMemEval)：S/M/oracle 数据格式与评测命令。
+- [LongMemEval-V2, arXiv:2605.12493](https://arxiv.org/abs/2605.12493)：451 道环境经验题、Insert/Query 与准确率—延迟评测。[本地译读](../../docs/papers-zh/05-longmemeval-v2.md)
 - [LoCoMo, arXiv:2402.17753](https://arxiv.org/abs/2402.17753)：超长期对话评测。[中文精读](../../docs/papers-zh/04-retrieval-eval.md#locomo)
 - [LoCoMo 官方仓库](https://github.com/snap-research/locomo)：当前 locomo10、任务与限制。
 - [AML API Guide](https://agentmemories.ai/api-guide)：Add/Search、Top K、CAMBench Coding 与统一评测边界。

@@ -55,7 +55,7 @@ InsightMem 与 **Mem0 的检索侧**和 **Zep 的 episode 留存思想**有相�
 - [[insightmem|InsightMem 机制审计]] — InsightMem 是全量会话轨迹持久化与确定性混合证据检索，不是抽取式记忆 OS。
 - [[insightmem-governance|InsightMem 隔离、幂等与数据治理]] — 正常运行采用 append-only，user_id 隔离检索，删除依赖离线运维流程。
 - [[agent-memory|Agent Memory 概念地图]] — 用五个动作、四种记忆类型和四层知识结构理解 Agent Memory。
-- [[learning-path|用 InsightMem 学习 Agent Memory]] — 把 InsightMem 当作外部情景记忆与混合检索的可运行参考，再补齐抽取、更新和遗忘。
+- [[learning-path|用 InsightMem 学习 Agent Memory]] — 用 Hello Agents 第 8、9 章重写记忆检索与上下文工程实战教程，并以 InsightMem 和 email-agent Notebook 运行阶段一实验。
 - [[memgpt-letta|MemGPT、Letta 与 MemFS]] — MemGPT 用主外上下文和队列管理模拟 OS，Letta 将其产品化，MemFS 是新的文件式记忆形态。
 - [[memos-vs-memoryos|MemOS 与 MemoryOS 不要混淆]] — MemOS 管理记忆资源与表示，MemoryOS 管理短中长期对话记忆、分页与人格。
 <!-- generated:backlinks:end -->

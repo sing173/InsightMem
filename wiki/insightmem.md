@@ -81,7 +81,7 @@ Add 是同步的：HTTP 成功返回时，数据已经可检索。实现见 [ser
 ## 反向链接
 
 - [[agent-memory|Agent Memory 概念地图]] — 用五个动作、四种记忆类型和四层知识结构理解 Agent Memory。
-- [[learning-path|用 InsightMem 学习 Agent Memory]] — 把 InsightMem 当作外部情景记忆与混合检索的可运行参考，再补齐抽取、更新和遗忘。
+- [[learning-path|用 InsightMem 学习 Agent Memory]] — 用 Hello Agents 第 8、9 章重写记忆检索与上下文工程实战教程，并以 InsightMem 和 email-agent Notebook 运行阶段一实验。
 - [[memory-frameworks|Agent Memory 框架机制对比]] — 从记忆单元、写入、更新、检索和上下文管理比较 InsightMem 与六类框架。
 - [[memos-vs-memoryos|MemOS 与 MemoryOS 不要混淆]] — MemOS 管理记忆资源与表示，MemoryOS 管理短中长期对话记忆、分页与人格。
 - [[schema|Wiki 维护约定]] — 说明源文档、Wiki 页面、frontmatter、生成索引与反向链接的维护方式。

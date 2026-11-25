@@ -68,7 +68,7 @@
 - 按轮数计算不一定能控制 token，因为单轮长度差异很大；
 - 粗暴截断可能拆开 tool call 与 tool result，破坏执行语义。
 
-**实践要点**：系统提示、工具定义、关键约束和未完成工具调用通常不应被窗口随意裁掉。MemGPT 的 FIFO 队列是更完整的上下文管理案例，见 [MemGPT 精读](../../docs/papers-zh/01-foundations.md)。
+**实践要点**：系统提示、工具定义、关键约束和未完成工具调用通常不应被窗口随意裁掉。MemGPT 的 FIFO 队列是更完整的上下文管理案例，见 [MemGPT 本地精读](../../docs/papers-zh/01-foundations.md#memgpt)。
 
 ### 2.3 相关性过滤：先区分“过滤”与“淘汰”
 
@@ -130,7 +130,7 @@
 - 图不自动解决模糊语义匹配；
 - 多跳结果需要来源和置信度，否则只是更长的错误链。
 
-**实践要点**：图与向量通常互补：向量找入口，图沿关系扩展。现有 [现代系统精读](../../docs/papers-zh/03-systems.md) 已覆盖 Graphiti、HippoRAG 等更完整的实现。
+**实践要点**：图与向量通常互补：向量找入口，图沿关系扩展。[Graphiti / Zep 本地精读](../../docs/papers-zh/03-systems.md#zep) 与 [HippoRAG 本地精读](../../docs/papers-zh/04-retrieval-eval.md#hipporag) 提供了两种更完整的实现。
 
 ### 2.7 分层记忆：组合多种策略，而不是新存储介质
 

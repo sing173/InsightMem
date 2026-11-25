@@ -7,6 +7,7 @@ query. Answers are produced by the evaluation platform; this service only
 performs Add and Search. Current release: `0.2`.
 
 中文知识入口：[Agent Memory Wiki](index.md)（机制审计、框架对比与学习路线）。
+中文实战教程：[Agent Memory 实战教程](learning/agent-memory-course/README.md)（阶段一：记忆与检索）；[旧版教程备份](learning/agent-memory-tutorial/README.md)。
 
 ## What it does
 
@@ -72,6 +73,14 @@ curl -s -X POST localhost:8000/search \
 
 `user_id` is the only retrieval-isolation boundary. See
 [docs/api-contract.md](docs/api-contract.md) for the full contract.
+
+## Notebook experiments
+
+[experiments/insightmem](experiments/insightmem/README.md) provides a VS Code
+Notebook project that calls the in-process service directly. The stage-one
+email Agent is in [experiments/email-agent](experiments/email-agent/README.md).
+See [experiments/README.md](experiments/README.md) for the layout used by
+future experiment projects.
 
 ## Retrieval profile
 

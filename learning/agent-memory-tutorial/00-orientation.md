@@ -18,11 +18,43 @@
 
 先建立判断标准，再学具体策略。否则很容易把“能存”“能搜”“能摘要”误认为“有完整记忆能力”。
 
+### 0.1.1 两阶段学习路线
+
+本教程按两门社区经典课程组织，但不复制课程目录：
+
+| 阶段 | 主问题 | 对应课程 | 本教程产出 |
+|---|---|---|---|
+| 阶段一：LangGraph 长时记忆工程 | 如何把语义、情景、程序记忆写入 Store，并检索、装配、更新和评测 | [Long-Term Agentic Memory With LangGraph](https://www.deeplearning.ai/short-courses/long-term-agentic-memory-with-langgraph/) | 带长期记忆的邮件 Agent |
+| 阶段二：LLM as Operating Systems | Agent 如何自主管理有限上下文与外部记忆，处理 memory pressure、自编辑、dreaming 和共享 | [LLMs as Operating Systems: Agent Memory](https://www.deeplearning.ai/short-courses/llms-as-operating-systems-agent-memory/) | 可评测的 memory OS mini service |
+
+阶段一回答“记忆作为数据系统怎样做对”；阶段二回答“Agent 怎样主动管理这些记忆”。两者不是替代关系：LangGraph Store 可以成为外部记忆，MemGPT/Letta 的 memory manager 也可以包装 Store、文件或向量库。
+
+### 两个贯穿全教程的项目
+
+**项目 A：邮件 Agent。** 它先做三件事：判断邮件应忽略、通知还是回复；调用日历工具；代写邮件。没有记忆时，它不知道用户的写作风格、会议偏好和过去的承诺。阶段一依次加入：
+
+```text
+semantic memory    → 用户事实与偏好
+episodic memory    → 历史邮件处理示例
+procedural memory  → 从反馈更新的写作与路由指令
+```
+
+**项目 B：memory OS。** 它把有限上下文看成工作区，把 Recall Storage 看成完整消息历史，把 Archival Storage 看成长文档库。阶段二依次加入：
+
+```text
+core memory        → 当前常驻事实与指令
+recall memory      → 可搜索的完整对话
+archival memory    → 可搜索的外部知识
+memory manager     → 摘要、换入换出、自编辑与共享
+```
+
+每个项目都按同一顺序验收：**基线失败 → 单机制改善 → 失败案例 → 成本 → 可复现实验**。
+
 ---
 
 ## 0.2 一个可操作的定义
 
-本文采用 Anthropic 与 LangGraph 的工程定义：
+本文采用 [Anthropic 的工程定义](https://www.anthropic.com/research/components-of-agent-memory)与 [LangGraph Memory 中文译文](../../docs/langchain-memory-zh.md)中的工程视角：
 
 > **Agent Memory 是从经验中获得、跨会话保留、以后可以作为上下文重新读取的外部知识。**
 
@@ -72,7 +104,7 @@ action(t+1) = Agent(context(t+1), tools)
 
 ## 0.3 生命周期：五个动作，一条闭环
 
-CoALA 的决策循环可以写成：
+[CoALA 中文译文](../../docs/coala-zh.md) 的决策循环可以写成：
 
 ```text
 propose → evaluate → select → retrieve / reason / learn → execute

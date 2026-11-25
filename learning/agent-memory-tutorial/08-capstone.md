@@ -1,8 +1,9 @@
 # 08 架构对比与 Capstone（第 8 周）
 
 > 上一章：[07 评测](07-evaluation.md) · 返回：[路线入口](README.md)
+> 阶段：阶段二 memory OS + 两阶段综合验收。
 > 预计：10–14 小时
-> 本章目标：把前 7 周的能力收束成一个可运行、可评测的系统；能按任务约束解释不同框架为什么这样设计，而不是按品牌或榜单选型。
+> 本章目标：把前 7 周的能力收束成一个可运行、可评测的系统；能按任务约束解释 LangGraph 与 MemGPT/Letta 为什么这样设计，而不是按品牌或榜单选型。
 
 详细机制见 [现代系统精读](../../docs/papers-zh/03-systems.md)、[MemGPT 精读](../../docs/papers-zh/01-foundations.md#memgpt) 与 [项目架构](../../docs/architecture.md)。
 
@@ -35,7 +36,7 @@
 
 ### 2.1 MemGPT / Letta：上下文管理与外部存储
 
-MemGPT 把有限上下文看成需要主动管理的工作区：
+[MemGPT 本地精读](../../docs/papers-zh/01-foundations.md#memgpt) 把有限上下文看成需要主动管理的工作区：
 
 ```text
 Main Context
@@ -50,7 +51,7 @@ External Context
 - 通过函数调用在上下文与外部存储之间换入、换出；
 - 用 FIFO、递归摘要等方式缓解 memory pressure；
 - 将 eviction 与 deletion 分开：离开上下文不等于从存储删除；
-- Letta 将这套思想产品化为 agent runtime，并引入持久 memory blocks、文件式记忆等工程形态。
+- [Letta 官方文档](https://docs.letta.com/letta-code/memory) 将这套思想产品化为 agent runtime，并引入持久 memory blocks、文件式记忆等工程形态。
 
 **Leverage**：调用方获得“像管理内存一样管理上下文”的统一抽象，不必自己处理每次溢出。
 **代价**：上下文管理策略会改变 agent 可见信息，需要可观测的换入/换出日志；系统提示与工具设计对效果影响很大。
@@ -60,7 +61,7 @@ External Context
 
 ### 2.2 Mem0：显著事实抽取与多信号检索
 
-Mem0 将对话压缩为值得长期保留的记忆，再通过语义、关键词与实体信号检索；图变体把实体关系组织成图。
+[Mem0 本地精读](../../docs/papers-zh/03-systems.md#mem0) 将对话压缩为值得长期保留的记忆，再通过语义、关键词与实体信号检索；图变体把实体关系组织成图。
 
 必须分版：
 
@@ -76,7 +77,7 @@ Mem0 将对话压缩为值得长期保留的记忆，再通过语义、关键词
 
 ### 2.3 Zep / Graphiti：双时间知识图谱
 
-Zep 以 Graphiti 为核心组织 episode、entity、fact 与 edge：
+[Zep / Graphiti 本地精读](../../docs/papers-zh/03-systems.md#zep) 以 Graphiti 为核心组织 episode、entity、fact 与 edge：
 
 ```text
 episode
@@ -100,7 +101,7 @@ episode
 
 ### 2.4 MemOS：记忆资源与调度
 
-MemOS 的基本单元是 MemCube，统一封装内容与来源、版本等元数据，并连接明文、激活、参数三类记忆。
+[MemOS 本地精读](../../docs/papers-zh/03-systems.md#memos) 的基本单元是 MemCube，统一封装内容与来源、版本等元数据，并连接明文、激活、参数三类记忆。
 
 ```text
 MemCube
@@ -121,7 +122,7 @@ MemScheduler
 适合：持续学习、跨表示迁移、记忆系统研究。
 不适合：仅需稳定证据召回、要求快速复现的入门 Capstone。
 
-**不要与 MemoryOS 混淆**：MemOS 研究记忆资源与三类表示；MemoryOS 研究对话记忆的分层存储。
+**不要与 [MemoryOS 本地精读](../../docs/papers-zh/03-systems.md#memoryos) 混淆**：MemOS 研究记忆资源与三类表示；MemoryOS 研究对话记忆的分层存储。
 
 ### 2.5 MemoryOS：STM / MTM / LPM 分层对话记忆
 
@@ -269,9 +270,111 @@ immutable source messages
 
 ---
 
-## 6. Capstone A：mini memory service
+## 6. 两阶段 Capstone 路线
 
-### 6.1 目标与边界
+### 6.1 阶段一：带长期记忆的邮件 Agent
+
+对应 [Long-Term Agentic Memory With LangGraph](https://www.deeplearning.ai/short-courses/long-term-agentic-memory-with-langgraph/)。
+
+最低要求：
+
+1. **Semantic memory**：保存用户事实、偏好与约束，支持按 `user_id + namespace` 检索；
+2. **Episodic memory**：保存历史邮件处理示例，并检索相关 few-shot；
+3. **Procedural memory**：根据反馈更新写作、路由或工具使用指令；
+4. **Hot path / background**：至少一条记忆同步写入，一条后台整理；
+5. **Context builder**：对检索结果去重、排序并限制 token；
+6. **Evaluation**：对比 no memory、single memory type、full memory，报告准确率、token、p95 与失败案例。
+
+推荐实现：LangGraph + Store + 一个固定 reader；InsightMem 可作为外部证据检索 Adapter，但不必承担全部记忆逻辑。
+
+### 6.2 阶段二：memory OS mini service
+
+对应 [LLMs as Operating Systems: Agent Memory](https://www.deeplearning.ai/short-courses/llms-as-operating-systems-agent-memory/)。
+
+最低要求：
+
+1. **Core memory**：少量当前可见事实与指令，支持 Agent 自编辑并保留版本；
+2. **Recall memory**：最近对话与当前任务状态；
+3. **Archival memory**：可搜索的外部档案；
+4. **Memory pressure**：超过阈值时触发摘要、page-out 或 page-in；
+5. **Self-editing**：记录修改前后 diff、理由与回滚点；
+6. **Dreaming / consolidation**：后台整理，不覆盖新人工纠正；
+7. **Shared memory**：至少两个 Agent 共享一个只读或受控 memory block；
+8. **Evaluation**：报告换入换出准确率、摘要保真、回滚成功率、隔离与完整成本。
+
+推荐实现：一个显式 `MemoryManager` + Store/文件后端。不要一开始就调用通用 coding agent；先实现可观察、可测试的确定性策略。实验步骤见 [L8](labs.md#l8)。
+
+### 6.2.1 阶段一的里程碑
+
+> 可运行入口是 `experiments/email-agent/notebooks/01-baseline.ipynb` 到 `04-evaluation.ipynb`。当前实现是离线 `LocalStore` + 确定性策略，尚未包含 LangGraph Store 工具、真实 LLM、hot path/background 或 context builder。
+
+| 里程碑 | 交付物 | 验收问题 | 可运行入口 |
+|---|---|---|---|
+| M0 基线 | triage + response Agent | 没有记忆时哪些任务失败？ | [01-baseline](../../experiments/email-agent/notebooks/01-baseline.ipynb) |
+| M1 Semantic | Store + manage/search tools | 能否记住并纠正用户事实？ | [02-semantic-memory](../../experiments/email-agent/notebooks/02-semantic-memory.ipynb) |
+| M2 Episodic | examples namespace + few-shot | 新示例是否只影响目标用户？ | [03-episodic-and-procedural](../../experiments/email-agent/notebooks/03-episodic-and-procedural.ipynb) |
+| M3 Procedural | prompt 版本与反馈更新 | 反馈是否改变后续行为？ | [03-episodic-and-procedural](../../experiments/email-agent/notebooks/03-episodic-and-procedural.ipynb) |
+| M4 Evaluation | 四组对照与轨迹 | 收益是否来自单一机制？ | [04-evaluation](../../experiments/email-agent/notebooks/04-evaluation.ipynb) |
+
+Notebook 验证的是离线机制版本：M1 没有 LangMem 的 manage/search 工具，M2/M3 没有 LLM few-shot 或 prompt optimizer，M4 没有 token/p95 与统计置信区间。完成课程项目时仍需补齐这些能力。
+
+### 6.2.2 阶段二的里程碑
+
+> 阶段二目前没有可运行 Notebook；下表是设计与实现清单，不能由阶段一 01–04 Notebook 替代。
+
+| 里程碑 | 交付物 | 验收问题 |
+|---|---|---|
+| M0 自编辑 | dictionary + tool loop | 用户纠正后能否立即生效？ |
+| M1 外部记忆 | recall + archival Adapter | Agent 是否按需检索？ |
+| M2 上下文管理 | warning/refresh + summary | eviction 后能否找回旧消息？ |
+| M3 治理 | 版本、审计、后台 consolidation | 后台任务是否覆盖新纠正？ |
+| M4 多 Agent | shared block + 权限 | 共享是否造成越权？ |
+| M5 Evaluation | pressure/rollback/isolation 报告 | 是否报告完整成本？ |
+
+### 6.2.3 MemoryManager 最小接口
+
+```python
+class MemoryManager:
+    def compile_context(self, state, query, budget) -> Context:
+        """把 core、recall、archival 与当前任务装配成有限上下文。"""
+
+    def edit_core(self, block_id, old_value, new_value, reason) -> Version:
+        """校验版本、写入 diff 与审计，返回可回滚版本。"""
+
+    def search_recall(self, query, limit) -> list[Message]:
+        """搜索完整消息历史，不把 eviction 当 deletion。"""
+
+    def search_archival(self, query, limit) -> list[Passage]:
+        """搜索外部知识，保持来源与 scope。"""
+
+    def consolidate(self, snapshot) -> ConsolidationResult:
+        """后台整理；提交前重新读取并做 CAS。"""
+```
+
+接口验收比内部实现更重要：调用者必须知道预算、顺序、错误模式与回滚语义，而不只是看到函数签名。
+
+### 6.2.4 Capstone 检查点
+
+- 能否用一条轨迹证明 semantic memory 被检索并使用？
+- 能否用一条轨迹证明 procedural memory 被更新？
+- 能否证明 page-out 不等于 delete？
+- 能否证明 consolidation 不覆盖新版本？
+- 能否证明两个 Agent 共享 block 时仍有权限边界？
+
+### 6.3 共同验收
+
+- 写入原子、幂等、可追溯；
+- 检索与上下文装配有明确预算；
+- 自编辑与后台整理可回滚；
+- 多用户、多 Agent、多项目隔离；
+- 固定 reader、prompt、数据与 seed；
+- 至少两个消融、三个失败案例和完整成本表。
+
+---
+
+## 7. 通用证据服务：mini memory service
+
+### 7.1 目标与边界
 
 实现一个同步、可复现的记忆证据服务：
 
@@ -282,7 +385,7 @@ Search(query)  → ordered evidence items with provenance
 
 第一版不生成答案、不做后台 dreaming、不做图遍历。先证明写入、隔离、召回、融合和评测正确，再增加治理能力。
 
-### 6.2 接口合同
+### 7.2 接口合同
 
 ```http
 POST /add
@@ -322,7 +425,7 @@ Search：
 - `top_k` 是数量上限，不保证凑满；
 - 不返回其他用户的 id、score 或存在性信息。
 
-### 6.3 最小数据模型
+### 7.3 最小数据模型
 
 ```text
 request
@@ -352,7 +455,7 @@ view_source
 - vector 的模型与维度必须和 fingerprint 一致；
 - source 不可变；纠错产生新版本或新事实，不静默改原文。
 
-### 6.4 最小检索流水线
+### 7.4 最小检索流水线
 
 ```text
 snapshot
@@ -375,7 +478,7 @@ RRF(d) = Σᵣ wᵣ / (k + rankᵣ(d))
 
 在融合前按 canonical chunk ID 去重。证据 bundle 是优化，不是正确性前提；如果实现不稳定，先返回成员，再增加 bundle。
 
-### 6.5 不可妥协的不变量
+### 7.5 不可妥协的不变量
 
 1. **原子性**：Search 永远看不到半个 Add；
 2. **幂等性**：重放不产生重复 source；
@@ -384,7 +487,7 @@ RRF(d) = Σᵣ wᵣ / (k + rankᵣ(d))
 5. **可复现性**：固定模型、prompt、top_k、seed 后可重跑；
 6. **预算性**：结果上限可解释，不仅是一个 top_k 数字。
 
-### 6.6 测试面
+### 7.6 测试面
 
 | 层 | 必须测试 |
 |---|---|
@@ -401,7 +504,7 @@ RRF(d) = Σᵣ wᵣ / (k + rankᵣ(d))
 
 ---
 
-## 7. Capstone B：深化 InsightMem 的证据装配
+## 8. InsightMem 深化
 
 InsightMem 已有不可变 source、三腿召回、bundle 与 span 去重。可选择一个方向做深，不要同时重构整条链路。
 
@@ -438,7 +541,7 @@ InsightMem 已有不可变 source、三腿召回、bundle 与 span 去重。可�
 
 ---
 
-## 8. Capstone C：复现一个最小核心
+## 9. 框架最小复现
 
 只复现“能解释机制”的最小闭环，不追求功能齐全。
 
@@ -492,9 +595,9 @@ STM queue
 
 ---
 
-## 9. 实验与评分
+## 10. 实验与评分
 
-### 9.1 最小实验矩阵
+### 10.1 最小实验矩阵
 
 | 配置 | 目的 |
 |---|---|
@@ -509,7 +612,7 @@ STM queue
 
 固定 answerer、prompt、top_k、query 集合与证据预算。用 paired Δ 与 bootstrap CI，不用单次平均分宣称提升。
 
-### 9.2 Rubric
+### 10.2 Rubric
 
 | 维度 | 权重 | 满分标准 |
 |---|---:|---|
@@ -520,7 +623,7 @@ STM queue
 | 架构表达 | 10 | Module 接口清楚，locality/leverage 有证据 |
 | 成本与治理 | 10 | 完整成本、时间/删除/并发至少覆盖一项 |
 
-### 9.3 必交产物
+### 10.3 必交产物
 
 1. 一页数据流与状态图；
 2. Add/Search 接口合同与不变量；
@@ -532,7 +635,7 @@ STM queue
 
 ---
 
-## 10. 设计评审问题
+## 11. 设计评审问题
 
 提交前逐条回答：
 
@@ -547,7 +650,7 @@ STM queue
 
 ---
 
-## 11. 验收
+## 12. 验收
 
 - 系统能在干净环境跑起来，失败时不会静默半提交；
 - 双用户隔离、幂等重放与 payload 冲突有自动测试；
@@ -560,7 +663,7 @@ STM queue
 
 ---
 
-## 12. 机制依据与课程
+## 13. 机制依据与课程
 
 ### 一手论文与项目
 

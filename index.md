@@ -49,7 +49,7 @@
 
 | 页面 | 摘要 | 状态 |
 |---|---|---|
-| [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) | 把 InsightMem 当作外部情景记忆与混合检索的可运行参考，再补齐抽取、更新和遗忘。 | maintained |
+| [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) | 用 Hello Agents 第 8、9 章重写记忆检索与上下文工程实战教程，并以 InsightMem 和 email-agent Notebook 运行阶段一实验。 | maintained |
 
 ## 来源覆盖
 
@@ -66,16 +66,27 @@
 | `docs/papers-zh/02-surveys.md` | [Agent Memory 概念地图](wiki/agent-memory.md) |
 | `docs/papers-zh/03-systems.md` | [Agent Memory 框架机制对比](wiki/memory-frameworks.md)、[MemOS 与 MemoryOS 不要混淆](wiki/memos-vs-memoryos.md) |
 | `docs/papers-zh/04-retrieval-eval.md` | [AML Coding Track 与 InsightMem 定位](wiki/aml-coding-harness.md) |
+| `learning/agent-memory-course/README.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
+| `learning/agent-memory-course/stage1-memory-and-retrieval/00-quick-start.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
+| `learning/agent-memory-course/stage1-memory-and-retrieval/01-memory-workflow.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
+| `learning/agent-memory-course/stage1-memory-and-retrieval/04-rag-system.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
+| `learning/agent-memory-course/stage1-memory-and-retrieval/05-advanced-retrieval.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
+| `learning/agent-memory-course/stage2-context-engineering/00-context-engineering.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
+| `learning/agent-memory-course/stage2-context-engineering/01-context-builder.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
+| `learning/agent-memory-course/stage2-context-engineering/02-gssc-pipeline.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
+| `learning/agent-memory-course/stage2-context-engineering/03-note-tool.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
+| `learning/agent-memory-course/stage2-context-engineering/04-terminal-tool.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
+| `learning/agent-memory-course/stage2-context-engineering/05-codebase-maintainer.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
+| `learning/agent-memory-course/stage2-context-engineering/06-review.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
 | `learning/agent-memory-tutorial/00-orientation.md` | [Agent Memory 概念地图](wiki/agent-memory.md) |
 | `learning/agent-memory-tutorial/01-boundaries.md` | [Agent Memory 概念地图](wiki/agent-memory.md) |
-| `learning/agent-memory-tutorial/02-writing.md` | [Agent Memory 概念地图](wiki/agent-memory.md)、[用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
+| `learning/agent-memory-tutorial/02-writing.md` | [Agent Memory 概念地图](wiki/agent-memory.md) |
 | `learning/agent-memory-tutorial/03-storage.md` | [MemOS 与 MemoryOS 不要混淆](wiki/memos-vs-memoryos.md) |
-| `learning/agent-memory-tutorial/04-retrieval.md` | [InsightMem 三路检索与证据选择](wiki/insightmem-retrieval.md)、[混合检索与 RRF](wiki/hybrid-retrieval.md)、[用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
-| `learning/agent-memory-tutorial/05-fusion.md` | [InsightMem 三路检索与证据选择](wiki/insightmem-retrieval.md)、[混合检索与 RRF](wiki/hybrid-retrieval.md)、[用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
-| `learning/agent-memory-tutorial/06-governance.md` | [Agent Memory 概念地图](wiki/agent-memory.md)、[InsightMem 隔离、幂等与数据治理](wiki/insightmem-governance.md)、[用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
+| `learning/agent-memory-tutorial/04-retrieval.md` | [InsightMem 三路检索与证据选择](wiki/insightmem-retrieval.md)、[混合检索与 RRF](wiki/hybrid-retrieval.md) |
+| `learning/agent-memory-tutorial/05-fusion.md` | [InsightMem 三路检索与证据选择](wiki/insightmem-retrieval.md)、[混合检索与 RRF](wiki/hybrid-retrieval.md) |
+| `learning/agent-memory-tutorial/06-governance.md` | [Agent Memory 概念地图](wiki/agent-memory.md)、[InsightMem 隔离、幂等与数据治理](wiki/insightmem-governance.md) |
 | `learning/agent-memory-tutorial/07-evaluation.md` | [AML Coding Track 与 InsightMem 定位](wiki/aml-coding-harness.md) |
 | `learning/agent-memory-tutorial/08-capstone.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
-| `learning/agent-memory-tutorial/README.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
 | `learning/agent-memory-tutorial/evaluation.md` | [AML Coding Track 与 InsightMem 定位](wiki/aml-coding-harness.md) |
 | `learning/agent-memory-tutorial/labs.md` | [用 InsightMem 学习 Agent Memory](wiki/learning-path.md) |
 | `learning/agent-memory-tutorial/reading-list.md` | [MemGPT、Letta 与 MemFS](wiki/memgpt-letta.md) |

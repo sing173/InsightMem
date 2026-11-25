@@ -1,6 +1,7 @@
 # 05 融合与选择（第 5 周）
 
 > 上一章：[04 召回](04-retrieval.md) · 下一章：[06 更新与治理](06-governance.md)
+> 阶段：阶段一做上下文装配，阶段二加入 memory pressure 与 paging。
 > 预计：6–8 小时
 > 本章目标：能把多路候选融合成稳定排名；能在融合前做规范化去重；能设计去重、bundle、多样性和全局预算，并理解每一步的代价。
 
@@ -21,6 +22,85 @@ Recall → canonicalize → fuse → filter → bundle/dedup → budget → orde
 3. 重复内容应在融合前还是融合后处理？
 4. bundle 与成员为什么必须共存？
 5. 如何在固定预算下保留互补证据？
+
+## 本章实战：装配上下文与处理 memory pressure
+
+> 当前未实现 context builder 或 memory-pressure Notebook。`04-evaluation.ipynb` 只比较记忆配置，不覆盖 token 预算、paging 和上下文驱逐；本节应保留为机制与实现骨架。
+
+阶段一的 context builder 是确定性流水线：
+
+```python
+def build_context(query: str, user_id: str, budget: int) -> str:
+    facts = store.search(("memories", user_id, "collection"), query=query, limit=5)
+    examples = store.search(("examples", user_id), query=query, limit=2)
+    instructions = store.get(("instructions", user_id), key="email-style")
+
+    blocks = [
+        ("instructions", instructions.value if instructions else DEFAULT_INSTRUCTIONS),
+        ("relevant facts", format_memories(facts)),
+        ("few-shot examples", format_examples(examples)),
+        ("current task", query),
+    ]
+    return pack_with_budget(blocks, budget)
+```
+
+先固定顺序，再调节参；不要同时改召回、排序和 prompt，否则无法归因。
+
+阶段二的 memory manager 还要决定“现在该把什么换出去”：
+
+```text
+build_context(state, query, budget)
+  → retrieve candidates
+  → select evidence
+  → if context_pressure > threshold:
+       summarize low-priority history
+       page out cold blocks
+       page in relevant archival items
+  → validate budget
+```
+
+最小 memory-pressure 策略：
+
+1. 先删除重复、过期和低价值内容；
+2. 再摘要仍有必要保留的对话历史；
+3. 然后把冷 core block 移到外部存储；
+4. 最后按当前任务检索 archival memory；
+5. 记录每一次 page-in/page-out 的原因与 token 变化。
+
+```python
+def manage_pressure(state, budget):
+    if count_tokens(state.context) < state.warning_threshold:
+        return state
+
+    summary = summarize(state.old_messages + state.previous_summary)
+    cold_blocks = choose_cold_blocks(state.core_memory)
+    archival_items = state.archival.search(state.current_query, limit=3)
+
+    return state.with_context(
+        summary=summary,
+        core_memory=remove(cold_blocks),
+        recalled=archival_items,
+        events=[
+            {"action": "summarize", "input_tokens": ..., "output_tokens": ...},
+            {"action": "page_out", "block_ids": [...]},
+            {"action": "page_in", "item_ids": [...]},
+        ],
+    )
+```
+
+**eviction 不等于 deletion**：换出上下文的内容仍应可检索；只有明确治理操作才删除。
+
+### 检查点
+
+- context builder 与 memory manager 的职责分别是什么？
+- 为什么三类记忆需要固定注入顺序？
+- 什么情况下应该摘要，什么情况下应该 page-out？
+- 如何证明 page-in 的内容真的被 reader 使用？
+- 如果上下文已经超过预算，第一条消息应该保留什么？
+
+### 练习
+
+实现一个 2K token 的 context builder。逐步加入 facts、examples、instructions，记录每步的命中率与 token；再实现 warning/refresh 两档 memory pressure，验证 eviction 后仍能检索旧消息。
 
 ---
 

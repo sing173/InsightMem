@@ -1,0 +1,106 @@
+[
+  {
+    "email": {
+      "id": "promo-01",
+      "sender": "deals@shop.example",
+      "subject": "Last chance: 50% off all plans",
+      "body": "This promotional offer ends tonight. Unsubscribe from future messages."
+    },
+    "expected_action": "ignore",
+    "required_memory": []
+  },
+  {
+    "email": {
+      "id": "incident-01",
+      "sender": "alerts@company.example",
+      "subject": "SEV-1 production is down",
+      "body": "The checkout service is unavailable for all customers."
+    },
+    "expected_action": "notify",
+    "required_memory": []
+  },
+  {
+    "email": {
+      "id": "docs-question",
+      "sender": "alice@customer.example",
+      "subject": "API documentation question",
+      "body": "Can you send the API documentation for the batch endpoint?"
+    },
+    "expected_action": "respond",
+    "required_memory": ["semantic"],
+    "gold_tokens": ["John Doe"]
+  },
+  {
+    "email": {
+      "id": "vendor-pricing",
+      "sender": "billing@vendor.example",
+      "subject": "Documentation pricing",
+      "body": "Can you share pricing for the documentation portal?"
+    },
+    "expected_action": "ignore",
+    "required_memory": ["episodic"]
+  },
+  {
+    "email": {
+      "id": "event-invite",
+      "sender": "noreply@events.example",
+      "subject": "You're invited: AI meetup",
+      "body": "Join our community evening next Thursday for talks and networking."
+    },
+    "expected_action": "ignore",
+    "required_memory": ["procedural"]
+  },
+  {
+    "email": {
+      "id": "meeting-request",
+      "sender": "bob@customer.example",
+      "subject": "Meeting request for onboarding",
+      "body": "Can we schedule a meeting next week to review onboarding?"
+    },
+    "expected_action": "respond",
+    "required_memory": ["semantic"],
+    "gold_tokens": ["John Doe"]
+  },
+  {
+    "email": {
+      "id": "security-alert",
+      "sender": "security@accounts.example",
+      "subject": "Security alert: suspicious login",
+      "body": "We detected a suspicious login attempt and temporarily locked the account."
+    },
+    "expected_action": "notify",
+    "required_memory": []
+  },
+  {
+    "email": {
+      "id": "newsletter-01",
+      "sender": "digest@news.example",
+      "subject": "Weekly newsletter",
+      "body": "This week in platform engineering: release notes and community updates."
+    },
+    "expected_action": "ignore",
+    "required_memory": []
+  },
+  {
+    "email": {
+      "id": "bug-report",
+      "sender": "carol@customer.example",
+      "subject": "500 error in staging",
+      "body": "We see a 500 error when the batch import runs in staging."
+    },
+    "expected_action": "respond",
+    "required_memory": ["semantic"],
+    "gold_tokens": ["John Doe"]
+  },
+  {
+    "email": {
+      "id": "manager-update",
+      "sender": "manager@company.example",
+      "subject": "Status update for Friday",
+      "body": "Please send me a short status update by Friday."
+    },
+    "expected_action": "respond",
+    "required_memory": ["semantic"],
+    "gold_tokens": ["John Doe"]
+  }
+]

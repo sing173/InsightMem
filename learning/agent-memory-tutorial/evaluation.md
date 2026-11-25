@@ -64,13 +64,14 @@ prompt · top_k · 候选预算 · seed · 运行环境
 
 | 数据集 | 形态 | 主要指标 | 适合验证 | 当前口径与限制 |
 |---|---|---|---|---|
-| LongMemEval | 超长多会话对话，500 题 | QA accuracy；可派生 Recall@k | 抽取、多跳、时间、知识更新、弃答 | 必须注明 S/M/oracle 与版本；V2 不能与原版混报 |
-| LoCoMo | 长对话 QA / event summary | QA accuracy；证据命中 | 长期对话与跨会话事件 | 当前公开 `locomo10.json` 为 10 个对话，是原 50 conversations 的子集 |
-| BEAM | 1M / 10M token 级上下文 | accuracy、成本 | 超长上下文记忆 | 规模成本高；先小规模验证协议 |
-| CAMBench Coding | SWE 任务 × relevant/noisy | Overall Resolved | 编码证据复用、抗噪 | AML 平台统一 answerer/evaluator；150 任务，共 300 次尝试；正式 Top K=100 |
-| CL-Bench | 持续学习任务 | reward / 达标率 | 学习闭环与 dreaming | 厂商研究环境；跨环境比较需固定 harness |
-| VibeMemBench | 仓库级编码任务，待一手核验 | resolution | 编码记忆注入 | 本教程不采用“111 仓库、2026 新基准”等未核验数字作为事实 |
-| OmniMemEval | 多数据集统一评测 | 多指标 | 横向检查能力覆盖 | 必须核对 harness、数据版本与评分器 |
+| [LongMemEval 本地精读](../../docs/papers-zh/04-retrieval-eval.md#longmemeval) | 超长多会话对话，500 题 | QA accuracy；可派生 Recall@k | 抽取、多跳、时间、知识更新、弃答 | 必须注明 S/M/oracle 与版本；V2 不能与原版混报 |
+| [LongMemEval-V2 本地译读](../../docs/papers-zh/05-longmemeval-v2.md) | 451 道 Web/ServiceNow 轨迹题，最多约 115M tokens | accuracy + query latency；LAFS | 静态状态、动态状态、工作流、环境陷阱、前提意识 | Insert/Query 返回多模态证据；固定 reader；Small/Medium 不混报 |
+| [LoCoMo 本地精读](../../docs/papers-zh/04-retrieval-eval.md#locomo) | 长对话 QA / event summary | QA accuracy；证据命中 | 长期对话与跨会话事件 | 当前公开 `locomo10.json` 为 10 个对话，是原 50 conversations 的子集 |
+| [BEAM](https://arxiv.org/abs/2510.27246) | 100 段、最长 10M token 的对话，2,000 题 | rubric accuracy、成本 | 超长上下文记忆与矛盾消解 | 规模成本高；先小规模验证协议 |
+| [CAMBench Coding](https://agentmemories.ai/api-guide) | SWE 任务 × relevant/noisy | Overall Resolved | 编码证据复用、抗噪 | AML 平台统一 answerer/evaluator；150 任务，共 300 次尝试；正式 Top K=100 |
+| [CL-Bench](https://continual-learning-bench.com/news/cl-bench-1-0/) | 持续学习任务 | reward / 达标率 | 学习闭环与 dreaming | 厂商研究环境；跨环境比较需固定 harness |
+| [VibeMemBench](https://arxiv.org/abs/2609.23570v1) | 90 个 SWE-rebench V2 仓库中的 111 个编码目标 | resolution | 编码记忆注入与经验复用 | 2026-09-20 v1；3,634 条历史轨迹；目标经参考设置筛选，不能外推为任意仓库 |
+| [OmniMemEval](https://github.com/MemTensor/OmniMemEval) | 多数据集统一评测 | 多指标 | 横向检查能力覆盖 | 必须核对 harness、数据版本与评分器 |
 
 ### LongMemEval 的三种文件
 

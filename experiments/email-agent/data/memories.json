@@ -1,0 +1,65 @@
+{
+  "users": {
+    "user-a": {
+      "semantic": [
+        {
+          "key": "signature",
+          "value": {
+            "kind": "signature",
+            "value": "John Doe",
+            "content": "Always sign email replies as John Doe."
+          }
+        },
+        {
+          "key": "tone",
+          "value": {
+            "kind": "tone",
+            "content": "Use concise, direct replies for work email."
+          }
+        }
+      ],
+      "episodic": [
+        {
+          "key": "vendor-documentation-pricing",
+          "value": {
+            "email": {
+              "sender": "sales@vendor.example",
+              "subject": "Documentation pricing",
+              "body": "Please send pricing for your documentation portal."
+            },
+            "action": "ignore",
+            "reason": "Vendor pricing outreach was handled as low priority."
+          }
+        }
+      ],
+      "procedural": [
+        {
+          "key": "email-style",
+          "value": {
+            "prompt": "Ignore event invitations sent from noreply@events.example.",
+            "rules": [
+              {
+                "sender_contains": "@events.example",
+                "action": "ignore"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "user-b": {
+      "semantic": [
+        {
+          "key": "signature",
+          "value": {
+            "kind": "signature",
+            "value": "Jane Smith",
+            "content": "Always sign email replies as Jane Smith."
+          }
+        }
+      ],
+      "episodic": [],
+      "procedural": []
+    }
+  }
+}

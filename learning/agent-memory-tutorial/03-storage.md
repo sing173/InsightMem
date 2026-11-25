@@ -1,6 +1,7 @@
 # 03 存储与索引（第 3 周）
 
 > 上一章：[02 写入](02-writing.md) · 下一章：[04 召回](04-retrieval.md)
+> 阶段：阶段一选 Store/namespace 与索引，阶段二设计外部上下文与 MemFS。
 > 预计：6–8 小时
 > 本章目标：能先选记忆单元，再选存储与索引；能解释 BM25、精确 kNN、ANN 和图的适用边界；能把更新、隔离、重建与成本纳入设计。
 
@@ -32,6 +33,74 @@
 | View | 为检索构造的表示 | 代码展开、摘要索引 | 与源不同步 |
 
 原则：**源记录与检索表示分离。** 同一事实可以存在于原文、fact、view 和 embedding 中，但必须能互相追溯。
+
+### LangGraph Store、外部上下文与 MemFS
+
+| 形态 | 适合存什么 | 典型接口 | 阶段一用途 | 阶段二用途 |
+|---|---|---|---|---|
+| LangGraph Store | JSON 文档、用户偏好、few-shot 示例 | `namespace + key + value`，支持语义搜索与过滤 | 跨 thread 长期记忆 | memory manager 的外部记忆后端 |
+| Checkpointer | 当前 thread 的图状态 | `thread_id + checkpoint` | 暂停/恢复邮件 Agent | 恢复执行，不替代 archival memory |
+| 向量库 / 文档库 | 可语义检索的原始片段 | search / filter | semantic/episodic retrieval | archival memory |
+| Core memory block | 当前必须可见的少量事实与指令 | read / edit | 可作为显式 prompt 的一部分 | Agent 自编辑工作区 |
+| MemFS | Git-backed Markdown 记忆与技能 | 文件读写、版本、diff | 可审计的程序记忆 | 文件式 core/archival memory |
+
+关键区别：**Store 解决“跨会话保存与检索”，memory manager 解决“当前上下文放什么”。** 二者可以共用同一数据库，也可以分别实现。
+
+---
+
+## 本章实战：给三类记忆设计 namespace
+
+> 可运行实验：02/03 邮件 Agent Notebook；稳定实现：[LocalStore](../../experiments/email-agent/src/email_memory_lab/store.py#L20) 与 [SemanticMemory / EpisodicMemory / ProceduralMemory](../../experiments/email-agent/src/email_memory_lab/memory.py#L6)。
+> 当前 Notebook 覆盖 namespace 与 `put/get/search` 形态，不覆盖 BM25、dense、ANN 或 Recall/Archival Adapter。
+
+课程项目把所有长期记忆放在同一个 Store，但用 namespace 分开：
+
+```python
+NAMESPACES = {
+    "semantic": ("memories", user_id, "collection"),
+    "episodic": ("examples", user_id),
+    "procedural": ("instructions", user_id),
+}
+```
+
+### Profile 还是 Collection
+
+| 形态 | 适合 | 更新方式 | 风险 |
+|---|---|---|---|
+| Profile | 用户画像、稳定偏好 | patch 单个 JSON 文档 | 文档变大后容易丢字段 |
+| Collection | 多条事实、事件、示例 | insert / update / delete | 重复、冲突与检索噪声 |
+| Procedural document | 写作与路由指令 | 版本化替换 | 错误反馈固化 |
+
+一个实际系统可以同时使用三种形态。不要把“所有记忆都放进一个 vector store”当成唯一设计。
+
+### 从 Store 到外部记忆 Adapter
+
+阶段二的 Recall/Archival 不需要重新发明存储接口。可以定义两个 Adapter：
+
+```python
+class RecallStorage(Protocol):
+    def append(self, message: dict) -> None: ...
+    def search(self, query: str, limit: int) -> list[dict]: ...
+
+
+class ArchivalStorage(Protocol):
+    def insert(self, text: str, metadata: dict) -> str: ...
+    def search(self, query: str, limit: int) -> list[dict]: ...
+```
+
+它们可以分别由消息表、向量库或文件搜索实现。MemoryManager 只依赖接口，不依赖具体数据库。
+
+### 检查点
+
+- namespace 与 thread_id 的区别是什么？
+- 为什么 semantic、episodic、procedural 应该分开？
+- profile 更新为什么需要 schema 校验？
+- Recall Storage 与 Archival Storage 的内容粒度有何不同？
+- 如果 Store 换成 Postgres，哪些代码应该不变？
+
+### 练习
+
+为邮件 Agent 设计三层存储：原始邮件事件、语义事实、程序指令。画出 source of truth 与派生索引，并为每一层写一个重建测试。
 
 ---
 

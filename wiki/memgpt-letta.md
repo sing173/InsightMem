@@ -63,6 +63,6 @@ MemFS 更接近 MemGPT 的 OS 哲学，但不是论文机制的完整复刻。
 <!-- generated:backlinks:start -->
 ## 反向链接
 
-- [[learning-path|用 InsightMem 学习 Agent Memory]] — 把 InsightMem 当作外部情景记忆与混合检索的可运行参考，再补齐抽取、更新和遗忘。
+- [[learning-path|用 InsightMem 学习 Agent Memory]] — 用 Hello Agents 第 8、9 章重写记忆检索与上下文工程实战教程，并以 InsightMem 和 email-agent Notebook 运行阶段一实验。
 - [[memory-frameworks|Agent Memory 框架机制对比]] — 从记忆单元、写入、更新、检索和上下文管理比较 InsightMem 与六类框架。
 <!-- generated:backlinks:end -->

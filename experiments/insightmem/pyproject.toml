@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "insightmem-lab"
+version = "0.1.0"
+description = "Notebook experiments for the InsightMem evidence service"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "insightmem",
+    "numpy>=1.26,<3",
+]
+
+[project.optional-dependencies]
+notebooks = [
+    "ipykernel>=6,<8",
+    "jupyterlab>=4,<5",
+    "nbformat>=5.10,<6",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
